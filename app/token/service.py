@@ -1,6 +1,8 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from fastapi import Depends
 from sqlmodel import select
+
+from app.token.schemas.token_schema import TokenSchema
 from .tokens import RefreshToken
 from app.user.models import User
 from .utils import get_current_time
@@ -18,7 +20,7 @@ class TokenService:
         self.token_backend = token_backend
 
 
-    async def generate_auth_token(self, user_id: UUID) -> dict[str, str]:
+    async def generate_auth_token(self, user_id: UUID) -> TokenSchema:
 
         current_time = get_current_time()
 
@@ -26,28 +28,44 @@ class TokenService:
             sub=str(user_id),
             iss=self.settings.APP_ISS,
             iat=current_time,
-            exp=current_time + self.settings.REFRESH_TOKEN_JWT_EXPIRES_IN
+            exp=current_time + self.settings.REFRESH_TOKEN_JWT_EXPIRES_IN,
+            jti=str(uuid4())
         )
 
-        access_token = refresh_token.get_access_token(issue_time=current_time, expires_in=self.settings.ACCESS_TOKEN_JWT_EXPIRES_IN)
+        access_token = refresh_token.get_access_token(issue_time=current_time, expires_in=self.settings.ACCESS_TOKEN_JWT_EXPIRES_IN, jti=str(uuid4()))
 
-        tokens = {
-            "access_token": self.token_backend.encode_token(access_token),
-            "refresh_token": self.token_backend.encode_token(refresh_token)
-        }
+        tokens = TokenSchema(
+            access_token=self.token_backend.encode_token(access_token),
+            refresh_token=self.token_backend.encode_token(refresh_token)
+        )
 
-        await self.session.save(
-            RefreshTokenMOdel(
-                token=tokens["refresh_token"],
-                expires_at=refresh_token.exp,
-                user_id=user_id
-            )
-        )  
+
+        assert refresh_token.exp is not None, "Refresh token must have an expiry"
+
+        new_refresh_token_model = RefreshTokenMOdel(
+            token=tokens.refresh_token,
+            expires_at=refresh_token.exp,
+            user_id=user_id
+        )
+
+        self.session.add(new_refresh_token_model)
+
+
+        await self.session.commit()
         
         return tokens
     
 
-    async def refresh_token(self, refresh_token: str) -> dict[str, str]:
+    async def revoke_refresh_token(self, refresh_token: str) -> None:
+        token = (await self.session.exec(
+            select(RefreshTokenMOdel).where(RefreshTokenMOdel.token == refresh_token)
+        )).first()
+
+        if token and not token.is_blacklisted:
+            token.is_blacklisted = True
+            await self.session.commit()
+
+    async def refresh_token(self, refresh_token: str) -> TokenSchema:
 
         payload = self.token_backend.decode_token(token=refresh_token)
 

@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:18
+    image: postgres:17-alpine
     ports:
       - "5433:5432"
     volumes:
@@ -9,6 +9,11 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: db
+
+  redis:
+    image: redis:8.6.1-alpine
+    ports:
+      - "6379:6379"
   
   robot:
     container_name: cmp9134_2526_robot

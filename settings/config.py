@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from functools import lru_cache
 from datetime import timedelta
 from pydantic_settings import BaseSettings
-from typing import Annotated, Literal, Union, cast
+from typing import Annotated, Literal, cast
 
 load_dotenv()
 
@@ -49,7 +49,7 @@ class GlobalConfig(BaseSettings):
 
     APP_NAME: str ="cmp9134-2526-backend"
     APP_ISS: str = "cmp9134-2526-backend"
-    APP_VERSION: str = "2.1.0"
+    APP_VERSION: str = "0.0.1"
     APPLICATION_CERTIFICATE: str = Field(default=CERTIFICATE)
     BASE_DIR: Path = Field(default=_BASE_DIR)
 
@@ -76,6 +76,8 @@ class GlobalConfig(BaseSettings):
 
     # CORS
     CORS_ORIGINS: str = Field("*", env="CORS_ORIGINS")  # type: ignore
+
+    BASE_ROBOT_API_URL: str = Field(..., env="BASE_ROBOT_API_URL") # type: ignore
     
    
 

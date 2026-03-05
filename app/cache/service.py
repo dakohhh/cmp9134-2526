@@ -2,8 +2,8 @@ import time
 from fastapi import Depends
 from urllib.parse import urlparse
 from settings.config import SettingsDep
+from typing import Annotated, Optional, Dict, Any, Literal
 from redis.asyncio import Redis, from_url as redis_from_url
-from typing import Annotated, Optional, Dict, Any, Literal, Union
 
 CACHE_STORES = Literal["memory", "redis"]
 

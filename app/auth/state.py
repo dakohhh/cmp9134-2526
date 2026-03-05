@@ -10,7 +10,7 @@ from app.common.exceptions import UnauthorizedException, ForbiddenException
 
 
 class AuthJwtHTTPBearer(JwtHTTPBearer):
-    async def __call__(self, request: Request, session: DatabaseSession, token_backend: TokenBackend = Depends(get_token_backend)) -> User: # type: ignore
+    async def __call__(self, request: Request, session: DatabaseSession,  token_backend: TokenBackend = Depends(get_token_backend)) -> User: # type: ignore
         token = await super().__call__(request, token_backend)
 
         user = (await session.exec(select(User).where(User.id == UUID(token.sub)))).first()
@@ -27,7 +27,7 @@ auth_bearer = AuthJwtHTTPBearer()
 
 def require_permission() -> Callable[[User], User]:
     def guard(user: User = Depends(auth_bearer)) -> User:
-        if not user.is_staff:
+        if not user.is_super_admin:
             raise ForbiddenException("Forbidden")
         return user
     return guard

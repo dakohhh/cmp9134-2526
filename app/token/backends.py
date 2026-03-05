@@ -1,6 +1,6 @@
 import jwt
-from settings.config import settings # type: ignore
-from datetime import timedelta, datetime, timezone
+from settings.config import settings
+from datetime import datetime, timezone
 from app.token.tokens import Token, TokenType, AccessToken, RefreshToken
 from app.token.exception import TokenBackendError
 from .utils import get_current_time
@@ -66,12 +66,10 @@ class TokenBackend:
             raise TokenBackendError(f"Invalid token type: {payload.get('type')}")
         
 
-
-
 def get_token_backend() -> TokenBackend:
     """ Dependency to get the token backend """
 
     return TokenBackend(
-        secret_key=settings.JWT_SECRET, # type: ignore
-        algorithm=settings.JWT_ALGORITHM,  # type: ignore
+        secret_key=settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
     )

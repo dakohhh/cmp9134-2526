@@ -3,18 +3,24 @@ from typing import AsyncGenerator
 from settings.config import settings
 from contextlib import asynccontextmanager
 from sqlmodel import SQLModel, select # noqa: F401
+# import web
+from app.robot.gateway import robot_telemetry
 from app.auth.router import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.config import create_db_and_tables # noqa: F401
 from app.health.router import router as health_router
+from app.map.router import router as map_router
 from app.common.handlers import configure_error_middleware
 from app.common.utils.process_cors import process_cors_origins
+
+# ws://localhost:5000/ws/telemetry
 
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     try:
         # Only should be used in development, most preferred to use alembic to track migrations
         # await create_db_and_tables()
+        await robot_telemetry()
         yield
         print("Shutting Down Server")
     finally:
@@ -35,6 +41,7 @@ def register_routers(app: FastAPI) -> None:
     """Register all application routers/controllers"""
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(map_router)
 
 def create_app() -> FastAPI:
     app = FastAPI(
