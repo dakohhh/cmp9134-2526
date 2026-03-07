@@ -1,3 +1,5 @@
+import axios, { type AxiosInstance } from 'axios'
+
 const BASE_URL = '/v1'
 
 export class ApiError extends Error {
@@ -10,39 +12,36 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
-  const token = localStorage.getItem('access_token')
-
-  const headers: Record<string, string> = {
+const client: AxiosInstance = axios.create({
+  baseURL: BASE_URL,
+  headers: {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
-  }
+  },
+})
 
+client.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token')
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`
   }
+  return config
+})
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
-
-  if (!res.ok) {
-    let message = `HTTP ${res.status}`
-    try {
-      const body = await res.json()
-      message = body?.detail ?? body?.message ?? message
-    } catch {
-      // ignore parse errors
-    }
-    throw new ApiError(res.status, message)
-  }
-
-  return res.json() as Promise<T>
-}
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status ?? 500
+    const message =
+      error.response?.data?.detail ??
+      error.response?.data?.message ??
+      error.message ??
+      `HTTP ${status}`
+    throw new ApiError(status, message)
+  },
+)
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string) => client.get<T>(path).then((res) => res.data),
   post: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+    client.post<T>(path, body).then((res) => res.data),
 }

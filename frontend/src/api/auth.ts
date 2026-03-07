@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { api } from './client'
 
 export interface TokenData {
@@ -52,18 +53,15 @@ export async function refreshTokenApi(): Promise<TokenData> {
 export async function logoutApi(): Promise<void> {
   const accessToken = localStorage.getItem('access_token')
   const refreshToken = localStorage.getItem('refresh_token') ?? ''
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-    ...(refreshToken && { Cookie: `refresh_token=${refreshToken}` }),
-  }
-  const res = await fetch('/v1/auth/logout', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({}),
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body?.detail ?? body?.message ?? `HTTP ${res.status}`)
-  }
+  await axios.post(
+    '/v1/auth/logout',
+    {},
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+        ...(refreshToken && { Cookie: `refresh_token=${refreshToken}` }),
+      },
+    },
+  )
 }
