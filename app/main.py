@@ -3,7 +3,6 @@ from typing import AsyncGenerator
 from settings.config import settings
 from contextlib import asynccontextmanager
 from sqlmodel import SQLModel, select # noqa: F401
-# import web
 import asyncio
 from app.robot.gateway import robot_telemetry
 from app.auth.router import router as auth_router
@@ -15,8 +14,6 @@ from app.robot.router import router as robot_router
 from app.audit_log.router import router as audit_log_router
 from app.common.handlers import configure_error_middleware
 from app.common.utils.process_cors import process_cors_origins
-
-# ws://localhost:5000/ws/telemetry
 
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:

@@ -1,0 +1,26 @@
+services:
+  database:
+    image: postgres:17-alpine
+    ports:
+      - "5433:5432"
+    volumes:
+      - robot_postgres_database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: db
+
+  redis:
+    image: redis:8.6.1-alpine
+    ports:
+      - "6379:6379"
+  
+  robot:
+    container_name: cmp9134_2526_robot
+    image: ghcr.io/francescodelduchetto/cmp9134_2526_robotsim:latest
+    ports:
+      - "5555:5000"
+    
+volumes:
+  robot_postgres_database:
+

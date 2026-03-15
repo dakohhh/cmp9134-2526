@@ -1,0 +1,6 @@
+frontend/
+.venv
+.vscode
+.env.example
+.env
+__pycache__/
