@@ -12,6 +12,7 @@ from app.database.config import create_db_and_tables # noqa: F401
 from app.health.router import router as health_router
 from app.map.router import router as map_router
 from app.robot.router import router as robot_router
+from app.audit_log.router import router as audit_log_router
 from app.common.handlers import configure_error_middleware
 from app.common.utils.process_cors import process_cors_origins
 
@@ -46,6 +47,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(auth_router)
     app.include_router(map_router)
     app.include_router(robot_router)
+    app.include_router(audit_log_router)
 
 def create_app() -> FastAPI:
     app = FastAPI(

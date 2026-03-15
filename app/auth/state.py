@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Callable
 from sqlmodel import select
-from app.user.models import User
+from app.user.models import User, RoleEnum
 from fastapi import Depends, Request
 from app.token.scheme import JwtHTTPBearer
 from app.database.config import DatabaseSession
@@ -27,7 +27,8 @@ auth_bearer = AuthJwtHTTPBearer()
 
 def require_permission() -> Callable[[User], User]:
     def guard(user: User = Depends(auth_bearer)) -> User:
-        if not user.is_super_admin:
+        print("\nUser: ", user.role)
+        if user.role != RoleEnum.COMMANDER:
             raise ForbiddenException("Forbidden")
         return user
     return guard

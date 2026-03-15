@@ -6,7 +6,8 @@ import {
   useEffect,
   type ReactNode,
 } from 'react'
-import { getSessionApi, logoutApi } from '../api/auth'
+import { getSessionV1, logoutV1 } from '../api/v1'
+import { accessTokenCookie } from '../utils/cookies'
 
 interface AuthUser {
   full_name: string
@@ -30,24 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await logoutApi()
+      await logoutV1()
     } catch {
       // proceed with local cleanup even if the API call fails
     }
-    localStorage.removeItem('access_token')
+    accessTokenCookie.remove()
     localStorage.removeItem('refresh_token')
     setUser(null)
   }, [])
 
   const setTokens = useCallback(
     async (accessToken: string, refreshToken: string) => {
-      localStorage.setItem('access_token', accessToken)
+      accessTokenCookie.set(accessToken)
       localStorage.setItem('refresh_token', refreshToken)
       try {
-        const data = await getSessionApi()
+        const data = await getSessionV1()
         setUser({ full_name: data.full_name, email: data.email, role: data.role })
       } catch {
-        localStorage.removeItem('access_token')
+        accessTokenCookie.remove()
         localStorage.removeItem('refresh_token')
         setUser(null)
         throw new Error('Failed to load session')
@@ -58,13 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // On mount, try to restore session from stored token
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
+    const token = accessTokenCookie.get()
     if (!token) {
       setIsLoading(false)
       return
     }
 
-    getSessionApi()
+    getSessionV1()
       .then((data) => setUser({ full_name: data.full_name, email: data.email, role: data.role }))
       .catch(() => logout())
       .finally(() => setIsLoading(false))

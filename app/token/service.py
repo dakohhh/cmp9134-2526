@@ -1,7 +1,6 @@
 from uuid import UUID, uuid4
 from fastapi import Depends
 from sqlmodel import select
-
 from app.token.schemas.token_schema import TokenSchema
 from .tokens import RefreshToken
 from app.user.models import User

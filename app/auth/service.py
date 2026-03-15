@@ -2,6 +2,9 @@ import bcrypt
 from fastapi import Depends
 from sqlmodel import select
 from datetime import datetime, timezone
+from app.audit_log.models import ActionEnum
+from app.audit_log.schemas.create_audit_log_schema import CreateAuditLogSchema
+from app.audit_log.service import AuditLogService
 from app.auth.schemas.login_schema import LoginSchema
 from app.user.models import User
 from settings.config import SettingsDep
@@ -22,11 +25,13 @@ class AuthService:
             session: DatabaseSession,
             user_service: Annotated[UserService, Depends(UserService)],
             token_service: Annotated[TokenService, Depends(TokenService)],
+            audit_log_service: Annotated[AuditLogService, Depends(AuditLogService)]
         ):
         self.settings = settings
         self.session = session
         self.user_service = user_service
         self.token_service = token_service
+        self.audit_log_service = audit_log_service
     
     async def refresh_token(self, refresh_token: Optional[str]) -> TokenSchema:
         if not refresh_token:
@@ -55,6 +60,16 @@ class AuthService:
         existing_user.last_login = datetime.now(timezone.utc)
 
         await self.session.commit()
+
+        await self.session.refresh(existing_user)
+
+        await self.audit_log_service.create_audit_log(
+            existing_user, 
+            CreateAuditLogSchema(
+                action=ActionEnum.LOGIN, 
+                navigation_direction=None,
+            )
+        )
         
         return tokens
     

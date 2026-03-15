@@ -4,7 +4,6 @@ from typing import Union, Any, Optional
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from slowapi.errors import RateLimitExceeded
-from app.token.exception import TokenBackendError
 
 ErrorDataType = Optional[Union[str, dict[Any, Any], list[Any]]]
 
@@ -43,6 +42,12 @@ class NotFoundException(HTTPException):
         error = ErrorResponse(message=message, data=data, status_code=self.status_code)
         super().__init__(status_code=self.status_code, detail=error)
 
+
+class ServiceUnavailableException(HTTPException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    def __init__(self, message: str, data: ErrorDataType = None):
+        error = ErrorResponse(message=message, data=data, status_code=self.status_code)
+        super().__init__(status_code=self.status_code, detail=error)
 
 class UnsupportedMediaException(BaseHTTPException):
     status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE

@@ -31,6 +31,7 @@ if config.config_file_name is not None:
 from app.database.models import UUIDModel, TimestampModel, BaseModel  # noqa: E402, F401
 from app.user.models import *
 from app.token.models import *
+from app.audit_log.models import *
 
 target_metadata = SQLModel.metadata
 

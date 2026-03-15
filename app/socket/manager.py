@@ -32,10 +32,19 @@ class SocketConnectionManager:
     async def broadcast_telemetry_data(self, channel: Channel, data: TelemetryDataSchema) -> None:
         message = WsMessage[TelemetryDataSchema](type=WsMessageType.TELEMETRY, data=data)
         broadcast_tasks = []
-        for conn in self.connections[channel]:
+        for conn in self.connections.get(channel, []):
             broadcast_tasks.append(conn.websocket.send_json(message.model_dump()))
 
         await asyncio.gather(*broadcast_tasks)
+
+    async def broadcast_error(self, channel: Channel) -> None:
+        message = WsMessage[None](type=WsMessageType.ERROR, data=None)
+        broadcast_tasks = []
+        for conn in self.connections.get(channel, []):
+            broadcast_tasks.append(conn.websocket.send_json(message.model_dump()))
+
+        await asyncio.gather(*broadcast_tasks)
+
 
 
 socket_connection_manager = SocketConnectionManager()

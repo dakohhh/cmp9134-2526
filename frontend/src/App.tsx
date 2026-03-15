@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Login } from './pages/login'
 import { Register } from './pages/register'
 import { Dashboard } from './pages/dashboard'
+import { AuditLog } from './pages/audit-log'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import type { ReactNode } from 'react'
 
@@ -42,6 +43,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/audit-log"
+        element={
+          <ProtectedRoute>
+            <AuditLog />
           </ProtectedRoute>
         }
       />

@@ -1,15 +1,16 @@
 from enum import Enum
 from datetime import datetime
 from app.database.models import BaseModel
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 from sqlmodel import Boolean, Column, DateTime, Field, Relationship, text
 
 if TYPE_CHECKING:
     from app.token.models import RefreshToken
+    from app.audit_log.models import AuditLog
 
 class RoleEnum(Enum):
-    VIEWER = "viewer"
-    COMMANDER  = "commander"
+    VIEWER = "VIEWER"
+    COMMANDER  = "COMMANDER"
 
 class User(BaseModel, table=True):
     email: str = Field(unique=True, index=True)
@@ -21,6 +22,8 @@ class User(BaseModel, table=True):
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
-    refresh_tokens: list["RefreshToken"] = Relationship(back_populates="user")
+    refresh_tokens: List["RefreshToken"] = Relationship(back_populates="user")
+
+    audit_logs:  List["AuditLog"] = Relationship(back_populates="user")
     role: RoleEnum = Field(default=RoleEnum.VIEWER)
 

@@ -15,9 +15,16 @@ router = VersionRouter(path="robot", version="1", tags=["Robot"])
 
 @router.post("/move/", response_model=HttpResponse[None], status_code=HttpStatus.HTTP_200_OK)
 async def move_robot(move_robot_request_schema: MoveRobotRequestSchema, robot_service: Annotated[RobotService, Depends(RobotService)], user: User = Depends(auth_bearer)) -> HttpResponse[None]:
-    await robot_service.move_robot(move_robot_request_schema)
+    await robot_service.move_robot(user, move_robot_request_schema)
     
     return HttpResponse(message="Move Robot", data=None, status_code=HttpStatus.HTTP_200_OK)
+
+
+@router.post("/reset/", response_model=HttpResponse[None], status_code=HttpStatus.HTTP_200_OK)
+async def reset_robot(robot_service: Annotated[RobotService, Depends(RobotService)], user: User = Depends(auth_bearer)) -> HttpResponse[None]:
+    await robot_service.reset_robot(user)
+
+    return HttpResponse(message="Reset Robot", data=None, status_code=HttpStatus.HTTP_200_OK)
 
 @router.websocket("/")
 async def robot_ws(websocket: WebSocket) -> None:

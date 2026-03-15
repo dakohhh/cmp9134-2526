@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { registerApi } from '../api/auth'
+import { registerV1 } from '../api/v1'
 import { useAuth } from '../context/AuthContext'
 
 function Field({
@@ -79,7 +79,7 @@ export function Register() {
 
     setLoading(true)
     try {
-      const tokens = await registerApi(fullName, email, password)
+      const tokens = await registerV1(fullName, email, password)
       await setTokens(tokens.access_token, tokens.refresh_token)
       navigate('/dashboard', { replace: true })
     } catch (err) {

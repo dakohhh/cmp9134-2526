@@ -1,6 +1,5 @@
 import axios, { type AxiosInstance } from 'axios'
-
-const BASE_URL = '/v1'
+import { accessTokenCookie } from '../utils/cookies'
 
 export class ApiError extends Error {
   constructor(
@@ -13,14 +12,14 @@ export class ApiError extends Error {
 }
 
 const client: AxiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
+  const token = accessTokenCookie.get()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
