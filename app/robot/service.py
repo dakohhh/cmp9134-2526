@@ -2,6 +2,7 @@ import httpx
 from typing import Optional, Annotated
 from settings.config import SettingsDep
 from app.cache.service import CacheService
+from app.common.dependencies import HttpClient
 from app.user.models import User, RoleEnum
 from app.audit_log.models import ActionEnum
 from app.database.config import DatabaseSession
@@ -14,11 +15,28 @@ from .schemas.move_robot_request_schema import MoveRobotRequestSchema, Navigatio
 from .schemas.get_robot_status_response_schema import GetRobotStatusResponseSchema, Position
 
 class RobotService:
-    def __init__(self, session: DatabaseSession, settings: SettingsDep, cache_service: CacheService, audit_log_service: Annotated[AuditLogService, Depends(AuditLogService)]):
+    def __init__(self, session: DatabaseSession, settings: SettingsDep, cache_service: CacheService, audit_log_service: Annotated[AuditLogService, Depends(AuditLogService)], http_client: HttpClient):
         self.session = session
         self.settings = settings
         self.cache_service = cache_service
         self.audit_log_service = audit_log_service
+        self.http_client = http_client
+
+    @staticmethod
+    def calculate_new_position(position: Position, navigation: NavigationEnum) -> Position:
+        if navigation == NavigationEnum.RIGHT:
+            return Position(x=position.x + 1 if position.x < 20 else position.x, y=position.y)
+        
+        if navigation == NavigationEnum.LEFT:
+            return Position(x=position.x - 1 if position.x > 0 else position.x, y=position.y)
+        
+        if navigation == NavigationEnum.UP:
+            return Position(x=position.x, y=position.y - 1 if position.y > 0 else position.y)
+        
+        if navigation == NavigationEnum.DOWN:
+            return Position(x=position.x, y=position.y + 1 if position.y < 20 else position.y)
+        
+        raise ValueError(f"Unhandled navigation direction: {navigation}")
 
     async def move_robot(self, user: User,  move_robot_request_schema: MoveRobotRequestSchema) -> None:
 
@@ -33,56 +51,25 @@ class RobotService:
         if not lock:
             raise BadRequestException("Robot is currently being operated, try again shortly")
 
-        async with httpx.AsyncClient(base_url=self.settings.BASE_ROBOT_API_URL, timeout=30.0) as client:
-            try:
-
+        try:
                 # Fetch the current position of the robot
-                response = await client.get("/api/status")
+                response = await self.http_client.get(f"{self.settings.BASE_ROBOT_API_URL}/api/status")
 
                 response.raise_for_status()
 
                 get_robot_status_response_schema =  GetRobotStatusResponseSchema.model_validate(response.json())
 
-                new_position: Optional[Position] = None
-                if move_robot_request_schema.navigation == NavigationEnum.RIGHT:
+                new_position = RobotService.calculate_new_position(
+                    get_robot_status_response_schema.position,
+                    move_robot_request_schema.navigation
+                )
 
-                    new_position = Position(
-                        x = get_robot_status_response_schema.position.x + 1 if get_robot_status_response_schema.position.x < 20 else get_robot_status_response_schema.position.x, 
-                        y = get_robot_status_response_schema.position.y
-                    )
-
-                if move_robot_request_schema.navigation == NavigationEnum.LEFT:
-
-                    new_position = Position(
-                        x = get_robot_status_response_schema.position.x - 1 if get_robot_status_response_schema.position.x > 0 else get_robot_status_response_schema.position.x, 
-                        y = get_robot_status_response_schema.position.y
-                    )
-
-
-                if move_robot_request_schema.navigation == NavigationEnum.UP:
-
-                    new_position = Position( 
-                        x = get_robot_status_response_schema.position.x,
-                        y = get_robot_status_response_schema.position.y - 1 if  get_robot_status_response_schema.position.y > 0 else get_robot_status_response_schema.position.y
-                    )
-
-
-                if move_robot_request_schema.navigation == NavigationEnum.DOWN:
-
-                    new_position = Position( 
-                        x = get_robot_status_response_schema.position.x,
-                        y = get_robot_status_response_schema.position.y + 1 if  get_robot_status_response_schema.position.y < 20  else get_robot_status_response_schema.position.y
-                    )
-
-                if new_position is None:
-                    await redis.delete("redis-robot-lock")
-                    raise ValueError(f"Unhandled navigation direction: {move_robot_request_schema.navigation}")
-                
                 # Update the new position
-                response = await client.post("/api/move", json=new_position.model_dump())
+                response = await self.http_client.post(f"{self.settings.BASE_ROBOT_API_URL}/api/move", json=new_position.model_dump())
 
                 response.raise_for_status()
-            except httpx.HTTPStatusError as e:
+    
+        except httpx.HTTPStatusError as e:
                 await redis.delete("redis-robot-lock")
                 print("It reached this error")
                 if e.response.status_code == HttpStatus.HTTP_500_INTERNAL_SERVER_ERROR:
@@ -114,19 +101,17 @@ class RobotService:
         if not lock:
             raise BadRequestException("Robot is currently being reset, try again shortly")
 
-        async with httpx.AsyncClient(base_url=self.settings.BASE_ROBOT_API_URL, timeout=30.0) as client:
-            try:
-                # Fetch the current position of the robot
-                response = await client.post("/api/reset")
+        try:
+            response = await self.http_client.post(f"{self.settings.BASE_ROBOT_API_URL}/api/reset")
 
-                response.raise_for_status()
-    
-            except httpx.HTTPStatusError as e:
-                await redis.delete("redis-robot-reset-lock")
-                print("It reached this error")
-                if e.response.status_code == HttpStatus.HTTP_500_INTERNAL_SERVER_ERROR:
-                    raise ServiceUnavailableException("Robot is temporarily unreachable, try again shortly")
-                raise
+            response.raise_for_status()
+
+        except httpx.HTTPStatusError as e:
+            await redis.delete("redis-robot-reset-lock")
+            print("It reached this error")
+            if e.response.status_code == HttpStatus.HTTP_500_INTERNAL_SERVER_ERROR:
+                raise ServiceUnavailableException("Robot is temporarily unreachable, try again shortly")
+            raise
         
         await self.cache_service.delete("map_data")
     

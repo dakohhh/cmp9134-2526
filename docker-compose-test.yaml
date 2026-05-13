@@ -1,0 +1,22 @@
+# docker-compose.test.yml for running against test cases
+# API tests (tests/api/): only test_db required
+# Integration tests (tests/integration/): all services required
+services:
+  test_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5434:5432"
+
+  redis:
+    image: redis:8.6.1-alpine
+    ports:
+      - "6379:6379"
+
+  robot:
+    image: ghcr.io/francescodelduchetto/cmp9134_2526_robotsim:latest
+    ports:
+      - "5555:5000"

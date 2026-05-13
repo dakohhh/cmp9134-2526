@@ -90,7 +90,7 @@ export function AuditLog() {
                     <th className="px-4 py-3 text-[10px] uppercase tracking-wider text-muted font-semibold">Time</th>
                     <th className="px-4 py-3 text-[10px] uppercase tracking-wider text-muted font-semibold">Action</th>
                     <th className="px-4 py-3 text-[10px] uppercase tracking-wider text-muted font-semibold">Direction</th>
-                    <th className="px-4 py-3 text-[10px] uppercase tracking-wider text-muted font-semibold">User ID</th>
+                    <th className="px-4 py-3 text-[10px] uppercase tracking-wider text-muted font-semibold">User</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -99,8 +99,8 @@ export function AuditLog() {
                       <td className="px-4 py-3 text-white font-mono text-xs">{entry.created_at}</td>
                       <td className="px-4 py-3 text-white">{entry.action}</td>
                       <td className="px-4 py-3 text-muted">{entry.navigation_direction ?? '—'}</td>
-                      <td className="px-4 py-3 text-muted font-mono text-xs truncate max-w-[120px]" title={entry.user_id}>
-                        {entry.user_id.slice(0, 8)}…
+                      <td className="px-4 py-3 text-muted text-xs truncate max-w-[160px]" title={entry.user_id}>
+                        {entry.user?.full_name ?? entry.user_id.slice(0, 8) + '…'}
                       </td>
                     </tr>
                   ))}

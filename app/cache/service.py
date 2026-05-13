@@ -1,9 +1,8 @@
 import time
 from fastapi import Depends
 from urllib.parse import urlparse
-from settings.config import SettingsDep
+from app.common.dependencies import RedisClient
 from typing import Annotated, Optional, Dict, Any, Literal
-from redis.asyncio import Redis, from_url as redis_from_url
 
 CACHE_STORES = Literal["memory", "redis"]
 
@@ -19,7 +18,6 @@ def is_valid_redis_url(url: str) -> bool:
     except Exception:
         return False
 
-    
 class MemoryCacheValue:
     """
     ttl is in seconds
@@ -32,18 +30,14 @@ class MemoryCacheValue:
 
 
 class Cache:
-    def __init__(self, url: Optional[str] = None):
-        self.url = url
-        self.default_store: CACHE_STORES = "memory"
-        self.redis: Optional[Redis] = None # type: ignore
+    def __init__(self, redis_client: Optional[RedisClient] = None):
+        self.redis: Optional[RedisClient] = redis_client 
         self.memory_store: Dict[str, MemoryCacheValue] = {}
+        
+        self.default_store: CACHE_STORES = "memory"
 
-    async def connect(self,  **kwargs: Any) -> Any:
-        if self.url and is_valid_redis_url(self.url):
-            self.redis = await redis_from_url(self.url, **kwargs) # type: ignore
+        if self.redis:
             self.default_store = "redis"
-        else:
-            self.default_store = "memory"
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> Any:
         if self.default_store == "redis" and self.redis:
@@ -73,15 +67,10 @@ class Cache:
             return await self.redis.delete(key)
         return self.memory_store.pop(key, None)
 
-    async def close(self) -> None:
-        if self.redis:
-            await self.redis.close() # type: ignore
 
+async def get_cache_service(redis_client: RedisClient) -> Cache:
+    cache_service = Cache(redis_client=redis_client)
 
-async def get_cache_service(settings: SettingsDep) -> Cache:
-    cache_service = Cache(url=settings.REDIS_URL) # type: ignore
-
-    await cache_service.connect(**{"decode_responses": True})
     return cache_service
 
 

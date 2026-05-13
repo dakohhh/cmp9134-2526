@@ -1,10 +1,16 @@
 import { api } from '../client'
 
+export interface AuditLogUserV1 {
+  id: string
+  full_name: string | null
+}
+
 export interface AuditLogEntryV1 {
   id: string
   created_at: string
   updated_at: string
   user_id: string
+  user: AuditLogUserV1
   action: string
   navigation_direction: string | null
 }

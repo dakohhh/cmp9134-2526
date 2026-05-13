@@ -7,10 +7,11 @@ from app.common.response import HttpResponse
 from app.auth.state import require_permission
 from fastapi import Depends, status as HttpStatus
 from app.common.paginator import PaginationSchema, PaginatorResult
+from .schemas.get_all_audit_log_response_data_schema import GetAllAuditLogResponseDataSchema
 
 router = VersionRouter(path="audit-log", version="1", tags=["Audit Log"])
 
-@router.get("/", response_model=HttpResponse[PaginatorResult[AuditLog]])
+@router.get("/", response_model=HttpResponse[GetAllAuditLogResponseDataSchema])
 async def get_all_audit_logs(
     paginator_schema: Annotated[PaginationSchema, Depends(PaginationSchema)],
     audit_log_service: Annotated[AuditLogService, Depends(AuditLogService)], 

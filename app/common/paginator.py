@@ -58,6 +58,10 @@ class PaginatorResult(BaseModel, Generic[T]):
 
 
 
+PageNumberPaginatorMeta = PaginatorMeta
+
+
+
 class CursorPaginatorMeta(BaseModel):
     has_more: bool
     next_cursor: Optional[Union[UUID, datetime, int, str]]

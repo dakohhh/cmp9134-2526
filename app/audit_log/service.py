@@ -1,5 +1,6 @@
 from .models import AuditLog
 from app.user.models import User
+from sqlalchemy.orm import selectinload
 from app.database.config import DatabaseSession
 from app.common.paginator import PageNumberPaginator, PaginatorResult, PaginationSchema
 from .schemas.create_audit_log_schema import CreateAuditLogSchema
@@ -27,6 +28,7 @@ class AuditLogService:
         paginator = PageNumberPaginator(
             model=AuditLog,
             paginator_schema=paginator_schema,
+            options=(selectinload(AuditLog.user), ) # type: ignore
         )
 
         result = await paginator.apaginate(self.session)

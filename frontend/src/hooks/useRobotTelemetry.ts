@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 const RECONNECT_DELAY_MS = 3000
 
-export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
+/** connecting = first WebSocket open; reconnecting = new attempt after a prior successful session */
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
 
 export interface TelemetrySensors {
   N: number
@@ -25,6 +26,7 @@ export function useRobotTelemetry() {
   const cancelledRef = useRef(false)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
+  const hadSuccessfulConnectionRef = useRef(false)
 
   useEffect(() => {
     cancelledRef.current = false
@@ -34,10 +36,18 @@ export function useRobotTelemetry() {
 
     function connect() {
       if (cancelledRef.current) return
+      if (hadSuccessfulConnectionRef.current) {
+        setConnectionStatus('reconnecting')
+      } else {
+        setConnectionStatus('connecting')
+      }
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 
-      ws.onopen = () => setConnectionStatus('connected')
+      ws.onopen = () => {
+        hadSuccessfulConnectionRef.current = true
+        setConnectionStatus('connected')
+      }
       ws.onclose = () => {
         setConnectionStatus('disconnected')
         if (cancelledRef.current) return

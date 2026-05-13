@@ -9,7 +9,7 @@ import {
   type MapDataV1,
   type NavigationV1,
 } from '../api/v1'
-import { useRobotTelemetry } from '../hooks/useRobotTelemetry'
+import { useRobotTelemetry, type ConnectionStatus } from '../hooks/useRobotTelemetry'
 import { LidarCanvas } from '../components/LidarCanvas'
 
 // Fallback grid size when no map data
@@ -28,9 +28,47 @@ function cellClass(
   return base
 }
 
+function telemetryLinkPresentation(status: ConnectionStatus): {
+  title: string
+  detail: string | null
+  boxClass: string
+  dotClass: string
+} {
+  switch (status) {
+    case 'connected':
+      return {
+        title: 'Telemetry live',
+        detail: null,
+        boxClass: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-200',
+        dotClass: 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]',
+      }
+    case 'connecting':
+      return {
+        title: 'Connecting…',
+        detail: 'Opening telemetry stream',
+        boxClass: 'bg-amber-500/10 border-amber-500/25 text-amber-100',
+        dotClass: 'bg-amber-400 animate-pulse',
+      }
+    case 'reconnecting':
+      return {
+        title: 'Reconnecting…',
+        detail: 'Restoring telemetry stream',
+        boxClass: 'bg-amber-500/10 border-amber-500/25 text-amber-100',
+        dotClass: 'bg-amber-400 animate-pulse',
+      }
+    case 'disconnected':
+      return {
+        title: 'Signal lost',
+        detail: 'Retrying connection automatically',
+        boxClass: 'bg-danger/10 border-danger/30 text-danger',
+        dotClass: 'bg-danger',
+      }
+  }
+}
+
 export function Dashboard() {
   const { user, logout } = useAuth()
-  const { telemetry } = useRobotTelemetry()
+  const { telemetry, connectionStatus } = useRobotTelemetry()
   const [mapData, setMapData] = useState<MapDataV1 | null>(null)
   const [mapError, setMapError] = useState<string | null>(null)
   const [mapLoading, setMapLoading] = useState(true)
@@ -110,6 +148,8 @@ export function Dashboard() {
     )
   })
 
+  const linkUi = telemetryLinkPresentation(connectionStatus)
+
   return (
     <div className="min-h-screen flex flex-col bg-bg">
       <header className="fixed top-0 left-0 right-0 z-10 h-14 flex items-center justify-between gap-5 px-6 bg-card/95 backdrop-blur-sm border-b border-white/5">
@@ -135,6 +175,20 @@ export function Dashboard() {
               {telemetry?.status ?? '—'}
             </span>
             <span className="text-[10px] text-muted uppercase">Status</span>
+          </div>
+          <div
+            className={`flex flex-col gap-0.5 px-3 py-1.5 rounded-lg border min-w-[8.5rem] ${linkUi.boxClass}`}
+            role="status"
+            aria-live="polite"
+            aria-label={`Telemetry link: ${linkUi.title}`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`inline-block size-2 rounded-full flex-shrink-0 ${linkUi.dotClass}`} aria-hidden />
+              <span className="text-[11px] font-semibold tracking-wide uppercase">{linkUi.title}</span>
+            </div>
+            {linkUi.detail ? (
+              <span className="text-[10px] opacity-90 pl-4 leading-tight">{linkUi.detail}</span>
+            ) : null}
           </div>
         </div>
         <div className="flex items-center gap-4">
