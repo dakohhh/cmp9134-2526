@@ -1,0 +1,85 @@
+name: Run Test Suite
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout to branch
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Setup Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: false
+          virtualenvs-in-project: false
+          installer-parallel: true
+
+      - name: Install Dependencies
+        run: poetry install --no-interaction --no-root --with dev
+  
+      - name: Type Checking
+        run: poetry run mypy .
+
+  test:
+
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:8.6.1-alpine
+        ports:
+          - 6379:6379
+    
+      test_db:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+        ports:
+          - "5434:5432"
+      
+      robot:
+        image: ghcr.io/francescodelduchetto/cmp9134_2526_robotsim:latest
+        ports:
+          - "5555:5000"
+    
+    needs: [lint]
+    steps:
+      
+      - name: Checkout to branch
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Setup Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: false
+          virtualenvs-in-project: false
+          installer-parallel: true
+
+      - name: Install Dependencies
+        run: poetry install --no-interaction --no-root --with test
+
+      - name: Run Unit Tests
+        run: poetry run pytest tests/unit/ -v -s
+
+      - name: Run Api Tests
+        run: poetry run pytest tests/api/ -v -s
+      
+      - name: Run Integration Tests
+        run: poetry run pytest tests/integration/ -v -s
+
+    

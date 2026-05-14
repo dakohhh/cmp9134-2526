@@ -38,9 +38,10 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
-python_version = "3.12"
+python_version = '3.12'
 ignore_missing_imports = true
 strict = true
+exclude = "migrations/"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -171,7 +171,7 @@ class CursorPaginator(BasePaginator[T]):
         if self.paginator_schema.cursor is not None:
             # Get the cursor value from the database
             cursor_value_query = select(self.cursor_column).where(
-                self.model.id == self.paginator_schema.cursor
+                self.model.id == self.paginator_schema.cursor # type: ignore
             ).limit(1)
             cursor_value = (await session.exec(cursor_value_query)).first()
             
@@ -216,12 +216,12 @@ class CursorPaginator(BasePaginator[T]):
         if items:
             if self.reverse_results:
                 # After reversing: first item is oldest, last is newest
-                next_cursor = items[0].id if has_more else None  # Oldest item for "load more old"
-                prev_cursor = items[-1].id  # Newest item for "load more new"
+                next_cursor = items[0].id if has_more else None  # type: ignore # Oldest item for "load more old" 
+                prev_cursor = items[-1].id  # type: ignore # Newest item for "load more new"
             else:
                 # No reversing: maintain order
-                next_cursor = items[-1].id if has_more else None
-                prev_cursor = items[0].id if self.paginator_schema.cursor else None
+                next_cursor = items[-1].id if has_more else None # type: ignore
+                prev_cursor = items[0].id if self.paginator_schema.cursor else None # type: ignore
         
         return CursorPaginatorResult(
             results=items,
