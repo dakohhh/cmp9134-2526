@@ -53,8 +53,14 @@ jobs:
           - "5555:5000"
     
     needs: [lint]
+    env:
+      PYTHON_ENV: testing
+      JWT_SECRET_KEY: test-secret-key
+      DATABASE_URL: postgresql+asyncpg://user:pass@localhost:5434/test_db
+      REDIS_URL: redis://localhost:6379/0
+      BASE_ROBOT_API_URL: http://localhost:5555
+
     steps:
-      
       - name: Checkout to branch
         uses: actions/checkout@v6
 

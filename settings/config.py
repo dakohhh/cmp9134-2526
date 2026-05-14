@@ -11,7 +11,7 @@ from typing import Annotated, Literal, cast
 
 load_dotenv()
 
-EnvironmentType = Literal["development", "production"]
+EnvironmentType = Literal["development", "production", "testing"]
 env = os.getenv("PYTHON_ENV", "development")
 PYTHON_ENV: EnvironmentType = cast(EnvironmentType, env)
 
@@ -30,18 +30,6 @@ class APIDocsConfig(BaseSettings):
     API_DOCS_URL: str = Field("/docs", env="API_DOCS_URL")  # type: ignore
     API_REDOC_URL: str = Field("/redoc", env="API_REDOC_URL")  # type: ignore
     OPENAPI_URL: str = Field("/openapi.json", env="OPENAPI_URL")  # type: ignore
-
-
-class MailerConfig(BaseSettings):
-    """Mail/SMTP configuration for MailService."""
-
-    MAILER_SMTP_HOST: str = Field("smtp.gmail.com", env="MAILER_SMTP_HOST")  # type: ignore
-    MAILER_SMTP_PORT: int = Field(587, env="MAILER_SMTP_PORT")  # type: ignore
-    MAILER_SMTP_USER: str = Field("", env="MAILER_SMTP_USER")  # type: ignore
-    MAILER_SMTP_PASSWORD: str = Field("", env="MAILER_SMTP_PASSWORD")  # type: ignore
-    MAILER_SECURE: bool = Field(False, env="MAILER_SECURE")  # type: ignore
-    MAILER_FROM_EMAIL: str = Field("", env="MAILER_FROM_EMAIL")  # type: ignore
-    MAILER_FROM_NAME: str = Field("FreudWriter", env="MAILER_FROM_NAME")  # type: ignore
 
 
 class GlobalConfig(BaseSettings):
@@ -73,7 +61,6 @@ class GlobalConfig(BaseSettings):
     # Redis
     REDIS_URL: str = Field(..., env="REDIS_URL")  # type: ignore
 
-
     # CORS
     CORS_ORIGINS: str = Field("*", env="CORS_ORIGINS")  # type: ignore
 
@@ -90,6 +77,7 @@ def get_settings() -> ConfigType:
     configs = {
         "development": GlobalConfig,
         "production": GlobalConfig,
+        "testing": GlobalConfig,
     }
     if not PYTHON_ENV or PYTHON_ENV not in configs:
         raise ValueError(
