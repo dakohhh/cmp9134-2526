@@ -100,6 +100,13 @@ Purpose: Development assistance for CMP9134 Robot Management System
 - Registered `integration` custom marker in `pyproject.toml` to silence `PytestUnknownMarkWarning`
 **Verified:** API test suite (11 tests) still passes after the conftest reorganisation. Integration tests (3 tests) pass against live services. Marker warning resolved.
 
+### Entry 11
+**Task Category:** Documentation — Project README
+**Prompt Summary:** Asked Claude to create a README for the project including setup instructions using docker-compose.yaml and all relevant project information, and to add the prompt to AI_USAGE.md.
+**Why:** The assessment requires a public GitHub repository with documentation. The README serves as the entry point for anyone (including the assessor) cloning the repo.
+**Outcome:** Accepted. Claude read docker-compose.yaml, Dockerfile, entrypoint.sh, Makefile, and pyproject.toml to produce a README covering: stack table, feature list, Docker quick start, local development setup, environment variables reference, testing instructions (unit/API/integration), CI/CD summary, and project structure tree.
+**Verified:** Read the generated file and confirmed all ports, service names, commands, and paths match the actual project configuration.
+
 ---
 
 ## Notes

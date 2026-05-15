@@ -9,6 +9,10 @@ set -o nounset
 echo "Running Alembic migrations..."
 alembic upgrade head
 
+# Seed default commander
+echo "Seeding database..."
+python -m app.database.seed
+
 # Start Uvicorn
 echo "Starting Uvicorn..."
 

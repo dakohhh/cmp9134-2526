@@ -207,6 +207,14 @@ export function Dashboard() {
               Audit log
             </Link>
           )}
+          {canMove && (
+            <Link
+              to="/users"
+              className="text-sm font-medium text-muted hover:text-accent transition-colors"
+            >
+              Users
+            </Link>
+          )}
         </div>
         <button
           type="button"
