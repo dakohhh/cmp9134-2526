@@ -3,6 +3,7 @@ import { Login } from './pages/login'
 import { Register } from './pages/register'
 import { Dashboard } from './pages/dashboard'
 import { AuditLog } from './pages/audit-log'
+import { Users } from './pages/users'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import type { ReactNode } from 'react'
 
@@ -51,6 +52,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AuditLog />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <Users />
           </ProtectedRoute>
         }
       />

@@ -23,3 +23,10 @@ export {
   type AuditLogDataV1,
   type GetAuditLogsParamsV1,
 } from './audit-log'
+export {
+  getAllUsersV1,
+  updateUserRoleV1,
+  type UserEntryV1,
+  type UsersDataV1,
+  type UsersMetaV1,
+} from './admin'
