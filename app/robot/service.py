@@ -68,26 +68,26 @@ class RobotService:
                 response = await self.http_client.post(f"{self.settings.BASE_ROBOT_API_URL}/api/move", json=new_position.model_dump())
 
                 response.raise_for_status()
-    
+
+                # Write audit log before releasing the lock so a DB failure doesn't
+                # leave the robot moved but unrecorded
+                await self.audit_log_service.create_audit_log(
+                    user,
+                    CreateAuditLogSchema(
+                        action=ActionEnum.COMMAND,
+                        navigation_direction=move_robot_request_schema.navigation.value
+                    )
+                )
+
         except httpx.HTTPStatusError as e:
                 await redis.delete("redis-robot-lock")
                 print("It reached this error")
                 if e.response.status_code == HttpStatus.HTTP_500_INTERNAL_SERVER_ERROR:
                     raise ServiceUnavailableException("Robot is temporarily unreachable, try again shortly")
                 raise
-        
-        
+
         # Release the lock
         await redis.delete("redis-robot-lock")
-
-        # Optionally create a task queue as not to delay/block the UI
-        await self.audit_log_service.create_audit_log(
-            user, 
-            CreateAuditLogSchema(
-                action=ActionEnum.COMMAND, 
-                navigation_direction=move_robot_request_schema.navigation.value
-            )
-        )
 
 
     async def reset_robot(self, user: User) -> None:
@@ -106,22 +106,24 @@ class RobotService:
 
             response.raise_for_status()
 
+            await self.cache_service.delete("map_data")
+
+            # Write audit log before releasing the lock so a DB failure doesn't
+            # leave the robot reset but unrecorded
+            await self.audit_log_service.create_audit_log(
+                user,
+                CreateAuditLogSchema(
+                    action=ActionEnum.RESET_ROBOT,
+                    navigation_direction=None,
+                )
+            )
+
         except httpx.HTTPStatusError as e:
             await redis.delete("redis-robot-reset-lock")
             print("It reached this error")
             if e.response.status_code == HttpStatus.HTTP_500_INTERNAL_SERVER_ERROR:
                 raise ServiceUnavailableException("Robot is temporarily unreachable, try again shortly")
             raise
-        
-        await self.cache_service.delete("map_data")
-    
-        # Release the lock if exists
-        await redis.delete("redis-robot-reset-lock")
 
-        await self.audit_log_service.create_audit_log(
-            user, 
-            CreateAuditLogSchema(
-                action=ActionEnum.RESET_ROBOT, 
-                navigation_direction=None,
-            )
-        )
+        # Release the lock
+        await redis.delete("redis-robot-reset-lock")

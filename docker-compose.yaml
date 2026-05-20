@@ -40,7 +40,7 @@ services:
   database:
     image: postgres:17-alpine
     volumes:
-      - robot_postgres_database:/var/lib/postgresql/data
+      - robot_postgres_db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
@@ -70,5 +70,5 @@ networks:
   robot_network:
 
 volumes:
-  robot_postgres_database:
+  robot_postgres_db:
 

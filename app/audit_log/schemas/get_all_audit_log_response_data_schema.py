@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime
 from pydantic import BaseModel
 from ..models import ActionEnum
 from typing import List, Optional
@@ -13,6 +14,7 @@ class AuditLog(BaseModel,):
     navigation_direction: Optional[str] = None
     user: User
     user_id: UUID
+    created_at: datetime
 
 
 class GetAllAuditLogResponseDataSchema(BaseModel):
